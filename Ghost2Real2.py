@@ -413,11 +413,14 @@ def run_console_demo(file_path=None):
 # GUI Interface (if available)
 # ----------------------------
 if GUI_AVAILABLE:
-    class SimpleGUI:
+    class ResearchGUI:
         def __init__(self, file_path=None):
             self.lod_system = None
             self.root = None
             self.file_path = file_path if file_path else r"C:\Users\Ber\GhostObjects\tennis_ball.obj"
+            self.epochs_var = None
+            self.progress_var = None
+            self.training_data = []
 
         def create_gui(self):
             if not os.path.exists(self.file_path):
@@ -427,44 +430,161 @@ if GUI_AVAILABLE:
             self.lod_system = MLLODSystem(self.file_path)
 
             self.root = tk.Tk()
-            self.root.title("ML LOD System")
-            self.root.geometry("500x400")
+            self.root.title("Ghost2Real - Research Interface")
+            self.root.geometry("900x700")
+            self.root.configure(bg="#f0f0f0")
 
             # Title
-            title_label = tk.Label(self.root, text="ML Mesh Enhancement",
-                                  font=("Arial", 16, "bold"))
-            title_label.pack(pady=20)
+            title_label = tk.Label(self.root, text="Ghost2Real Neural Mesh Super-Resolution",
+                                  font=("Arial", 18, "bold"), bg="#f0f0f0", fg="#2c3e50")
+            title_label.pack(pady=15)
 
-            # Status
-            self.status_label = tk.Label(self.root, text="Ready to train ML model",
-                                        font=("Arial", 12))
-            self.status_label.pack(pady=10)
+            subtitle_label = tk.Label(self.root, text="Research-Focused ML Training Interface",
+                                     font=("Arial", 11), bg="#f0f0f0", fg="#7f8c8d")
+            subtitle_label.pack(pady=5)
 
-            # Buttons
-            train_button = tk.Button(self.root, text="Train ML Model",
-                                    command=self.train_model,
-                                    font=("Arial", 12), bg="#4CAF50", fg="white",
-                                    width=20, height=2)
-            train_button.pack(pady=10)
+            # Main container
+            main_frame = tk.Frame(self.root, bg="#f0f0f0")
+            main_frame.pack(fill="both", expand=True, padx=20, pady=10)
 
-            self.show_button = tk.Button(self.root, text="Show Results",
+            # Left panel - Mesh Info & Preview
+            left_panel = tk.LabelFrame(main_frame, text="Mesh Information",
+                                      font=("Arial", 11, "bold"), bg="white", padx=15, pady=15)
+            left_panel.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+
+            # Mesh statistics
+            mesh_info = f"""Original Mesh: {os.path.basename(self.file_path)}
+
+Vertices: {len(self.lod_system.original_mesh.vertices):,}
+Faces: {len(self.lod_system.original_mesh.faces):,}
+
+LOD Variants Generated:
+"""
+            for quality, mesh in self.lod_system.mesh_variants.items():
+                reduction = ((len(self.lod_system.original_mesh.faces) - len(mesh.faces)) /
+                           len(self.lod_system.original_mesh.faces)) * 100
+                mesh_info += f"  • {quality:12s}: {len(mesh.faces):4,} faces ({reduction:5.1f}% reduction)\n"
+
+            info_text = tk.Text(left_panel, height=15, width=40, font=("Consolas", 9),
+                              wrap="word", bg="#f8f9fa", relief="flat")
+            info_text.insert(1.0, mesh_info)
+            info_text.config(state="disabled")
+            info_text.pack(fill="both", expand=True)
+
+            # Preview button
+            preview_btn = tk.Button(left_panel, text="Preview Mesh",
+                                   command=self.preview_mesh,
+                                   font=("Arial", 10), bg="#3498db", fg="white",
+                                   activebackground="#2980b9", cursor="hand2")
+            preview_btn.pack(pady=10, fill="x")
+
+            # Right panel - Training Configuration
+            right_panel = tk.LabelFrame(main_frame, text="Training Configuration",
+                                       font=("Arial", 11, "bold"), bg="white", padx=15, pady=15)
+            right_panel.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
+
+            # Epochs configuration
+            epochs_frame = tk.Frame(right_panel, bg="white")
+            epochs_frame.pack(fill="x", pady=10)
+
+            tk.Label(epochs_frame, text="Training Epochs:",
+                    font=("Arial", 10, "bold"), bg="white").pack(anchor="w")
+
+            self.epochs_var = tk.IntVar(value=200)
+            epochs_slider = tk.Scale(epochs_frame, from_=50, to=1000,
+                                    orient="horizontal", variable=self.epochs_var,
+                                    length=300, bg="white", font=("Arial", 9))
+            epochs_slider.pack(fill="x", pady=5)
+
+            tk.Label(epochs_frame, textvariable=self.epochs_var,
+                    font=("Arial", 10), bg="white", fg="#2c3e50").pack(anchor="w")
+
+            # Model parameters info
+            params_info = """Model Architecture:
+  • Hidden Dimension: 512
+  • Encoder: 3-layer dense + LayerNorm
+  • Decoder: 5-layer residual network
+  • Optimizer: Adam (LR=0.001, decay=0.95)
+  • K-NN Neighbors: 8 (Gaussian weighting)
+
+Training Strategy:
+  • Gradient clipping: L2 norm ≤ 1.0
+  • Loss: MSE + Smoothness regularization
+  • Early stopping available
+"""
+            params_text = tk.Text(right_panel, height=12, width=40, font=("Consolas", 8),
+                                wrap="word", bg="#f8f9fa", relief="flat")
+            params_text.insert(1.0, params_info)
+            params_text.config(state="disabled")
+            params_text.pack(fill="both", expand=True, pady=10)
+
+            # Training button
+            train_btn = tk.Button(right_panel, text="Start Training",
+                                 command=self.train_model,
+                                 font=("Arial", 12, "bold"), bg="#27ae60", fg="white",
+                                 activebackground="#229954", cursor="hand2", height=2)
+            train_btn.pack(pady=10, fill="x")
+
+            # Results button
+            self.results_btn = tk.Button(right_panel, text="View Results & Metrics",
                                         command=self.show_results,
-                                        font=("Arial", 12), bg="#2196F3", fg="white",
-                                        width=20, height=2, state="disabled")
-            self.show_button.pack(pady=10)
+                                        font=("Arial", 11), bg="#e74c3c", fg="white",
+                                        activebackground="#c0392b", cursor="hand2",
+                                        state="disabled")
+            self.results_btn.pack(pady=5, fill="x")
 
-            # Results area
-            self.results_text = tk.Text(self.root, height=12, width=60, font=("Consolas", 9))
-            self.results_text.pack(pady=20, padx=20, fill="both", expand=True)
+            # Bottom panel - Training Progress & Metrics
+            bottom_panel = tk.LabelFrame(main_frame, text="Training Progress & Metrics",
+                                        font=("Arial", 11, "bold"), bg="white", padx=15, pady=15)
+            bottom_panel.grid(row=1, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)
+
+            # Progress bar
+            progress_frame = tk.Frame(bottom_panel, bg="white")
+            progress_frame.pack(fill="x", pady=5)
+
+            tk.Label(progress_frame, text="Progress:", font=("Arial", 9), bg="white").pack(side="left", padx=5)
+
+            self.progress_var = tk.DoubleVar()
+            progress_bar = ttk.Progressbar(progress_frame, variable=self.progress_var,
+                                          maximum=100, length=400)
+            progress_bar.pack(side="left", fill="x", expand=True, padx=5)
+
+            # Status label
+            self.status_label = tk.Label(bottom_panel, text="Ready to begin training",
+                                        font=("Arial", 10), bg="white", fg="#7f8c8d")
+            self.status_label.pack(pady=5)
+
+            # Results text area
+            self.results_text = tk.Text(bottom_panel, height=10, width=100,
+                                       font=("Consolas", 9), wrap="word",
+                                       bg="#f8f9fa", relief="flat")
+            scrollbar = tk.Scrollbar(bottom_panel, command=self.results_text.yview)
+            self.results_text.config(yscrollcommand=scrollbar.set)
+            scrollbar.pack(side="right", fill="y")
+            self.results_text.pack(fill="both", expand=True, pady=5)
+
+            # Configure grid weights
+            main_frame.grid_columnconfigure(0, weight=1)
+            main_frame.grid_columnconfigure(1, weight=1)
+            main_frame.grid_rowconfigure(0, weight=1)
+            main_frame.grid_rowconfigure(1, weight=1)
 
             return self.root
 
+        def preview_mesh(self):
+            """Show preview of the original mesh"""
+            self.lod_system.original_mesh.show()
+
         def train_model(self):
-            self.status_label.config(text="Training... Please wait")
+            epochs = self.epochs_var.get()
+            self.status_label.config(text=f"Training with {epochs} epochs... Please wait", fg="#e67e22")
+            self.progress_var.set(0)
+            self.results_text.delete(1.0, tk.END)
+            self.results_text.insert(1.0, f"[TRAINING STARTED]\nEpochs: {epochs}\nModel: MeshSuperResNet (512-dim)\n\n")
             self.root.update()
 
             def train_worker():
-                success = self.lod_system.train_ml_model(epochs=100)
+                success = self.lod_system.train_ml_model(epochs=epochs)
 
                 if success:
                     self.root.after(0, self._training_success)
@@ -476,38 +596,54 @@ if GUI_AVAILABLE:
             thread.start()
 
         def _training_success(self):
-            self.status_label.config(text="Training completed successfully!")
-            self.show_button.config(state="normal")
+            self.status_label.config(text="✓ Training completed successfully!", fg="#27ae60")
+            self.progress_var.set(100)
+            self.results_btn.config(state="normal")
 
-            results = f"""ML Training Completed!
+            metrics = self.lod_system.quality_metrics
 
-📊 Results:
-"""
-            for metric, value in self.lod_system.quality_metrics.items():
-                if isinstance(value, float):
-                    results += f"  • {metric}: {value:.6f}\n"
-                else:
-                    results += f"  • {metric}: {value}\n"
+            results = f"""[TRAINING COMPLETED]
 
-            results += f"""
-🎯 Success! Your ML model learned to enhance mesh quality.
-Click 'Show Results' to see visual evidence!
+==================== PERFORMANCE METRICS ====================
+
+Reconstruction Quality:
+  • Mean Error:         {metrics['reconstruction_error_mean']:.8f}
+  • Max Error:          {metrics['reconstruction_error_max']:.8f}
+  • Final Loss:         {metrics['final_training_loss']:.8f}
+  • Best Loss:          {metrics['best_training_loss']:.8f}
+
+Mesh Enhancement:
+  • Face Count:         {metrics['face_improvement']}
+  • Quality Gain:       {metrics['quality_improvement']:.2f}%
+
+Training Configuration:
+  • Epochs:             {self.epochs_var.get()}
+  • Hidden Dimension:   512
+  • Learning Rate:      0.001 (exponential decay)
+  • Gradient Clipping:  L2 norm ≤ 1.0
+
+==============================================================
+
+✓ Model successfully learned to enhance mesh geometry.
+✓ Ready for visual inspection and further analysis.
+
+Click 'View Results & Metrics' to see 3D comparison.
 """
 
             self.results_text.delete(1.0, tk.END)
             self.results_text.insert(1.0, results)
 
         def _training_failed(self):
-            self.status_label.config(text="Training failed")
+            self.status_label.config(text="✗ Training failed - check console", fg="#e74c3c")
             self.results_text.delete(1.0, tk.END)
-            self.results_text.insert(1.0, "Training failed. Check console for details.")
+            self.results_text.insert(1.0, "[TRAINING FAILED]\n\nCheck console output for error details.\nCommon issues:\n  • Invalid mesh file\n  • Insufficient memory\n  • Incompatible TensorFlow version")
 
         def show_results(self):
             self.lod_system.show_visual_results()
 
     def run_gui_demo(file_path=None):
         """Run GUI demo"""
-        gui = SimpleGUI(file_path)
+        gui = ResearchGUI(file_path)
         root = gui.create_gui()
         if root:
             root.mainloop()
