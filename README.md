@@ -1,9 +1,12 @@
-# Ghost2Real - Neural Mesh Super-Resolution
+# GhostObjects - Neural Mesh Super-Resolution
+
+Reconstruction of 3D objects using ML to mimic large poly-mesh objects with a low poly-mesh object.
 
 A deep learning system that enhances low-poly 3D meshes to high-poly quality using a custom TensorFlow neural network. Ghost2Real learns geometric details from simplified meshes and reconstructs high-resolution vertices with impressive accuracy.
 
 ![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
 ![TensorFlow](https://img.shields.io/badge/TensorFlow-2.13+-orange.svg)
+![Unity](https://img.shields.io/badge/Unity-2021+-purple.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 ## Features
@@ -14,16 +17,17 @@ A deep learning system that enhances low-poly 3D meshes to high-poly quality usi
 - **Visual Comparison**: Side-by-side visualization of all quality levels
 - **Advanced Architecture**: Encoder-decoder network with local/global feature learning
 - **Quality Metrics**: Detailed reconstruction error analysis and training statistics
+- **Unity Integration**: Works alongside Unity project for game development workflow
 
 ## Installation
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/GhostObjects.git
+git clone https://github.com/berisas/GhostObjects.git
 cd GhostObjects
 ```
 
-2. Install dependencies:
+2. Install Python dependencies:
 ```bash
 pip install -r requirements.txt
 ```
@@ -94,11 +98,14 @@ Displays 5 meshes side-by-side:
 
 ```
 GhostObjects/
-├── Ghost2Real2.py         # Production version with LOD & GUI
+├── Ghost2Real2.py         # ML mesh super-resolution system
 ├── tennis_ball.obj        # Test mesh
 ├── requirements.txt       # Python dependencies
 ├── CLAUDE.md             # Detailed technical documentation
-└── README.md             # This file
+├── README.md             # This file
+├── Assets/               # Unity project assets
+├── ProjectSettings/      # Unity project settings
+└── Packages/             # Unity packages
 ```
 
 ## Results
@@ -137,6 +144,7 @@ Expected performance on tennis ball mesh:
 - SciPy 1.11+
 - Matplotlib 3.7+ (for GUI)
 - Tkinter (optional, for GUI mode)
+- Unity 2021+ (for Unity development)
 
 ## Limitations
 
@@ -153,6 +161,7 @@ Expected performance on tennis ball mesh:
 - [ ] Support for texture and normal map enhancement
 - [ ] Batch processing for multiple meshes
 - [ ] Real-time preview during training
+- [ ] Direct Unity integration via plugin
 
 ## Contributing
 
@@ -167,6 +176,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - Built with TensorFlow and Trimesh libraries
 - Inspired by mesh super-resolution research in computer graphics
 - Tennis ball model used for testing and demonstration
+- Unity integration for game development workflow
 
 ## Contact
 
@@ -174,4 +184,4 @@ For questions or feedback, please open an issue on GitHub.
 
 ---
 
-**Made with machine learning and passion for 3D graphics**
+**Made with machine learning, Unity, and passion for 3D graphics**
